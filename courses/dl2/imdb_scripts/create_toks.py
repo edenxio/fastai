@@ -24,12 +24,15 @@ def fixup(x):
 
 def get_texts(df, n_lbls, lang='en'):
     if len(df.columns) == 1:
+        # 1列时就是文本列，没有labels
         labels = []
         texts = f'\n{BOS} {FLD} 1 ' + df[0].astype(str)
     else:
+        # 多列时，n_lbls 是文本列
         labels = df.iloc[:,1].values.astype(np.int64)
         texts = f'\n{BOS} {FLD} 1 ' + df[n_lbls].astype(str)
-        for i in range(n_lbls+1, len(df.columns)): texts += f' {FLD} {i-n_lbls+1} ' + df[i].astype(str)
+        # TODO: 新语料结构应该是0列是lable，后面的都作为文本
+        # for i in range(n_lbls+1, len(df.columns)): texts += f' {FLD} {i-n_lbls+1} ' + df[i].astype(str)
     texts = list(texts.apply(fixup).values)
     # 分词处理
     tok = Tokenizer(lang=lang).proc_all_mp(partition_by_cores(texts), lang=lang)
@@ -71,7 +74,7 @@ def create_toks(dir_path, chunksize=1000, n_lbls=1, lang='en'):
     np.save(tmp_path / 'lbl_trn.npy', trn_labels)
     np.save(tmp_path / 'lbl_val.npy', val_labels)
 
-    trn_joined = ' '.join(tok_trn)
+    trn_joined = [' '.join(o) for o in tok_trn]
     open(tmp_path / 'joined.txt', 'w', encoding='utf-8').writelines(trn_joined)
 
 

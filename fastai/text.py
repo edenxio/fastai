@@ -100,7 +100,7 @@ class Tokenizer():
         # ncpus = ncpus or num_cpus()//2
         # with ProcessPoolExecutor(ncpus) as e:
         #     return sum(e.map(Tokenizer.proc_all, ss, [lang] * len(ss)), [])
-        return sum(Tokenizer.proc_all(ss, lang), [])
+        return Tokenizer.proc_all(ss, lang)
 
 
 class TextDataset(Dataset):
