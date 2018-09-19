@@ -50,7 +50,7 @@ class Tokenizer():
     def sub_br(self,x): return self.re_br.sub("\n", x)
 
     def spacy_tok(self,x):
-        return [t.text for t in self.tok.tokenizer(self.sub_br(x))]
+        return [t.text for t in self.tok(self.sub_br(x))]
 
     re_rep = re.compile(r'(\S)(\1{3,})')
     re_word_rep = re.compile(r'(\b\w+\W+)(\1{3,})')
@@ -87,18 +87,20 @@ class Tokenizer():
         s = Tokenizer.do_caps(s)
         s = re.sub(r'([/#])', r' \1 ', s)
         s = re.sub(' {2,}', ' ', s)
+        s = re.sub('\n{2,}', '\n', s)
         return self.spacy_tok(s)
 
     @staticmethod
     def proc_all(ss, lang):
         tok = Tokenizer(lang)
-        return [tok.proc_text(s) for s in ss]
+        return [tok.proc_text(x) for s in ss for x in s]
 
     @staticmethod
     def proc_all_mp(ss, lang='en', ncpus = None):
-        ncpus = ncpus or num_cpus()//2
-        with ProcessPoolExecutor(ncpus) as e:
-            return sum(e.map(Tokenizer.proc_all, ss, [lang]*len(ss)), [])
+        # ncpus = ncpus or num_cpus()//2
+        # with ProcessPoolExecutor(ncpus) as e:
+        #     return sum(e.map(Tokenizer.proc_all, ss, [lang] * len(ss)), [])
+        return sum(Tokenizer.proc_all(ss, lang), [])
 
 
 class TextDataset(Dataset):
