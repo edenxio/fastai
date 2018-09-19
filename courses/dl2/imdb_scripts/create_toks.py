@@ -1,6 +1,9 @@
 from fastai.text import *
+from jianfan2 import ftoj
+
 import html
 import fire
+
 
 BOS = 'xbos'  # beginning-of-sentence tag
 FLD = 'xfld'  # data field tag
@@ -13,7 +16,10 @@ def fixup(x):
         'nbsp;', ' ').replace('#36;', '$').replace('\\n', "\n").replace('quot;', "'").replace(
         '<br />', "\n").replace('\\"', '"').replace('<unk>','u_n').replace(' @.@ ','.').replace(
         ' @-@ ','-').replace('\\', ' \\ ')
-    return re1.sub(' ', html.unescape(x))
+    src_text = re1.sub(' ', html.unescape(x))
+    # 繁简转化
+    src_text = ftoj(src_text)
+    return src_text
 
 
 def get_texts(df, n_lbls, lang='en'):
@@ -21,11 +27,11 @@ def get_texts(df, n_lbls, lang='en'):
         labels = []
         texts = f'\n{BOS} {FLD} 1 ' + df[0].astype(str)
     else:
-        labels = df.iloc[:,range(n_lbls)].values.astype(np.int64)
+        labels = df.iloc[:,1].values.astype(np.int64)
         texts = f'\n{BOS} {FLD} 1 ' + df[n_lbls].astype(str)
         for i in range(n_lbls+1, len(df.columns)): texts += f' {FLD} {i-n_lbls+1} ' + df[i].astype(str)
     texts = list(texts.apply(fixup).values)
-
+    # 分词处理
     tok = Tokenizer(lang=lang).proc_all_mp(partition_by_cores(texts), lang=lang)
     return tok, list(labels)
 
@@ -40,7 +46,7 @@ def get_all(df, n_lbls, lang='en'):
     return tok, labels
 
 
-def create_toks(dir_path, chunksize=24000, n_lbls=1, lang='en'):
+def create_toks(dir_path, chunksize=1000, n_lbls=1, lang='en'):
     print(f'dir_path {dir_path} chunksize {chunksize} n_lbls {n_lbls} lang {lang}')
     try:
         spacy.load(lang)
@@ -65,8 +71,9 @@ def create_toks(dir_path, chunksize=24000, n_lbls=1, lang='en'):
     np.save(tmp_path / 'lbl_trn.npy', trn_labels)
     np.save(tmp_path / 'lbl_val.npy', val_labels)
 
-    trn_joined = [' '.join(o) for o in tok_trn]
+    trn_joined = ' '.join(tok_trn)
     open(tmp_path / 'joined.txt', 'w', encoding='utf-8').writelines(trn_joined)
 
 
-if __name__ == '__main__': fire.Fire(create_toks)
+if __name__ == '__main__': 
+    fire.Fire(create_toks)
