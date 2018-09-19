@@ -34,9 +34,12 @@ def load_model(m, p):
     sd = torch.load(p, map_location=lambda storage, loc: storage)
     names = set(m.state_dict().keys())
     for n in list(sd.keys()): # list "detatches" the iterator
-        if n not in names and n+'_raw' in names:
-            if n+'_raw' not in sd: sd[n+'_raw'] = sd[n]
-            del sd[n]
+        if (n not in names)| (n=='encoder.weight') |(n=='encoder_with_dropout.embed.weight'):
+            if n+'_raw' not in sd and n+'_raw' in names:
+                sd[n+'_raw'] = sd[n]
+                del sd[n]
+            elif n in names:
+                sd[n] = m.state_dict()[n]
     m.load_state_dict(sd)
 
 def load_pre(pre, f, fn):
