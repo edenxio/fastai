@@ -39,11 +39,14 @@ def get_texts(df, n_lbls, lang='en'):
     return tok, list(labels)
 
 
-def get_all(df, n_lbls, lang='en'):
+def get_all(df, n_lbls, lang='en', flag=''):
     tok, labels = [], []
     for i, r in enumerate(df):
         print(i)
         tok_, labels_ = get_texts(r, n_lbls, lang=lang)
+        if flag:
+            np.save(tmp_path / f'tok_{flag}_{i}.npy', tok_)
+            np.save(tmp_path / f'lbl_{flag}_{i}.npy', labels_)
         tok += tok_
         labels += labels_
     return tok, labels
@@ -64,10 +67,10 @@ def create_toks(dir_path, chunksize=1000, n_lbls=1, lang='en'):
     df_trn = pd.read_csv(dir_path / 'train.csv', header=None, chunksize=chunksize)
     df_val = pd.read_csv(dir_path / 'val.csv', header=None, chunksize=chunksize)
 
-    tmp_path = dir_path / 'tmp'
+    global tmp_path = dir_path / 'tmp'
     tmp_path.mkdir(exist_ok=True)
-    tok_trn, trn_labels = get_all(df_trn, n_lbls, lang=lang)
-    tok_val, val_labels = get_all(df_val, n_lbls, lang=lang)
+    tok_trn, trn_labels = get_all(df_trn, n_lbls, lang=lang, flag='trn')
+    tok_val, val_labels = get_all(df_val, n_lbls, lang=lang, flag='val')
 
     np.save(tmp_path / 'tok_trn.npy', tok_trn)
     np.save(tmp_path / 'tok_val.npy', tok_val)
